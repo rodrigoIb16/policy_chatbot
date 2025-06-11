@@ -1,13 +1,19 @@
 import sys, os
+import json
+import logging
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from langchain.agents import initialize_agent, AgentType
-from langchain.tools import Tool
 from langchain.memory import ConversationSummaryBufferMemory
 from langchain_openai import ChatOpenAI
 
 from tools import tool_list
 from prompts import SYSTEM_PROMPT
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.2) #temperature=0.2: Makes the output a bit more deterministic
 memory = ConversationSummaryBufferMemory(
@@ -21,7 +27,7 @@ agent = initialize_agent(
     tools=tool_list,
     llm=llm,
     agent=AgentType.CHAT_CONVERSATIONAL_REACT_DESCRIPTION,
-    verbose=True,
+    verbose=False,
     memory=memory,
     handle_parsing_errors=True,
     agent_kwargs={
@@ -30,16 +36,11 @@ agent = initialize_agent(
     }
 )
 
-
-print("\nChatbot is ready! Type 'exit' to quit.\n")
-while True:
-    query = input("You: ")
-    if query.lower() in ["exit", "quit"]:
-        print("Goodbye!")
-        break
+query = os.getenv("CHAT_QUERY")
+if query:
     chat_history_str = memory.load_memory_variables({}).get("chat_history", "")
     result = agent.invoke({
         "input": query,
         "chat_history": chat_history_str
     })
-    print(f"\nAI: {result}\n")
+    print(json.dumps({"output": result["output"]}))

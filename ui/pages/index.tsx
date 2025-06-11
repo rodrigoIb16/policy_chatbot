@@ -23,7 +23,7 @@ export default function Home() {
     try {
       const parsed = JSON.parse(data.output)
       if (parsed?.output) botText = parsed.output
-    } catch (err){
+    } catch {
       // leave botText as is
     }
 

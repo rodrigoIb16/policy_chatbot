@@ -3,6 +3,9 @@ from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from retrieval import hybrid_retriever
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Query Rewriting Prompt
 rewriter_prompt = PromptTemplate.from_template(
@@ -24,23 +27,16 @@ def clarify_followup(question: str, history: str) -> str:
 
 # HR & Company Policy QA Tool
 def policy_docs_tool(query: str, chat_history: str = "") -> str:
-    # Step 1: Clarify using memory summary
     clarified_query = clarify_followup(query, chat_history) if chat_history else query
+    logger.info(f"[Original query]: {query}")
+    logger.info(f"[Clarified query]: {clarified_query}")
 
-    print(f"[Original query]: {query}")
-    print(f"[Clarified query]: {clarified_query}")
-
-    # Step 2: Rewrite for retriever
     clean_query = rewrite_query(clarified_query)
+    logger.info(f"[Rewritten query]: {clean_query}")
 
-    print(f"[Rewritten query]: {clean_query}")
-
-    # Step 3: Retrieve documents
     docs = hybrid_retriever().invoke(clean_query)
-
     return "\n\n".join([doc.page_content for doc in docs]) if docs else "Sorry, I couldn’t find any relevant policy documents for that."
 
-# Tool list for HRBot agent
 tool_list = [
     Tool.from_function(
         func=policy_docs_tool,
