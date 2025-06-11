@@ -14,20 +14,15 @@ OpenAI API key
 🚀 Setup Instructions
 ---------------------
 
-cd travel_chatbot
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-
 1. Clone the Repository
 ```bash
-git clone https://github.com/yourname/hrbot.git
-cd hrbot
+git clone https://github.com/rodrigoIb16/policy_chatbot.git
+cd policy_chatbot
 ```
 
 2. Setup Python Environment
 ```bash
-cd travel_chatbot
+cd policy_chatbot
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
