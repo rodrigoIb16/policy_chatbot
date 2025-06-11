@@ -1,23 +1,31 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { spawn } from 'child_process'
+import path from 'path'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const { input } = req.body
 
-  try {
-    const response = await fetch('https://policy-chatbot-lt2w-git-main-rodrigoib16s-projects.vercel.app/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ input }),
-    })
+  const scriptPath = path.resolve(process.cwd(), '../src/policy_agent.py')
 
-    if (!response.ok) {
-      throw new Error(`Backend error: ${response.statusText}`)
-    }
+  const pyProcess = spawn('python3', [scriptPath], {
+    cwd: process.cwd().replace(/\/ui$/, ''),
+    env: {
+      ...process.env,
+      CHAT_QUERY: input,
+    },
+  })
 
-    const data = await response.json()
-    res.status(200).json({ output: data.output || "No response." })
-  } catch (err) {
-    console.error('Error calling backend:', err)
-    res.status(500).json({ output: "Sorry, something went wrong." })
-  }
+  let output = ''
+  pyProcess.stdout.on('data', (data) => {
+    output += data.toString()
+  })
+
+  pyProcess.stderr.on('data', (data) => {
+    console.error('stderr:', data.toString())
+  })
+
+  pyProcess.on('close', () => {
+    const lastLine = output.trim().split('\n').pop()
+    res.status(200).json({ output: lastLine || "No response." })
+  })
 }
